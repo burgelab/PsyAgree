@@ -54,11 +54,11 @@ properties
     F00
 
     %: DIMENSIONS
-    nPass
-    nAry
+    nPass % number of passes
+    nAry  % n-ary (e.g. 2=binary, 3=trinary)
     bBinary
-    nQuad
-    nRhoAll
+    nQuad % number of orthants
+    nRhoAll % number of unique rho values
     nAgree
     %
     patterns
@@ -123,6 +123,13 @@ methods(Static)
 
         obj.parse(Opts);
     end
+    function out=getDefaults()
+        P=DVFitter.getP();
+        out=P(:,1:2)';
+        out=struct(out{:});
+    end
+end
+methods(Static,Hidden)
     function P=getP()
         P={ ...
             'modelType',    'RMM','';
@@ -154,11 +161,6 @@ methods(Static)
             'bootCIPrcnt',  68.27,'';
             'bProg',        true,'';
         };
-    end
-    function out=getDefaults()
-        P=DVFitter.getP();
-        out=P(:,1:2)';
-        out=struct(out{:});
     end
 end
 methods
@@ -238,6 +240,8 @@ methods
         obj.Parent=parent;
     end
 %- PARSE
+end
+methods(Hidden)
     function Opts=parse(obj,Opts)
         P=DVFitter.getP();
         if iscell(Opts)
@@ -300,6 +304,8 @@ methods
 
         obj.fminOpts=F;
     end
+end
+methods
 %- RUN
     function cont(obj,bProg)
         if nargin < 2
@@ -345,13 +351,13 @@ methods
         obj.init_params();
 
         % mvnopts
-        obj.mvnopts=rMvnCdf.getOpts(obj.nPass);
+        obj.mvnopts=RMvnCdf.getOpts(obj.nPass);
         if obj.nPass > 3
             obj.mvnopts.bCheckBounds=false;
         end
 
         % mvnconstants
-        obj.mvnconsts=rMvnCdf.getConstants(obj.nPass,obj.cls,obj.mvnopts);
+        obj.mvnconsts=RMvnCdf.getConstants(obj.nPass,obj.cls,obj.mvnopts);
 
         % F0
         obj.F00=DVFitter.getF0(obj);
@@ -362,6 +368,12 @@ methods
         % PACK
         obj.init_pack;
     end
+    function printResults(obj)
+        tbl=obj.fit2table(obj.Fit);
+        tbl.print([],length(tbl));
+    end
+end
+methods(Hidden)
     function init_params(obj)
 
         if obj.bCombineCmp
@@ -597,10 +609,6 @@ methods
         end
         obj.Fit=F;
     end
-    function [flds,pflds]=get_pack_flds(obj)
-        flds={'RHO', 'MU', 'CR','STD','NegLL','NegLLAll','P'};
-        pflds={'nTrl','nTrlAll','PC','PA','P','N'};
-    end
     function getOpts(obj)
         flds=obj.optsFlds;
         obj.opts=struct();
@@ -615,6 +623,69 @@ methods
         obj.DVFit.applyData(obj.RCMPCHS, obj.CMPX, obj.CMPXI, obj.STDX);
         obj.safe_run();
     end
+    function Tbl=fit2table(obj,Fit)
+        [flds,pflds,flds2]=DVFitter.get_pack_flds();
+
+        key={'param' 'type' 'value'};
+        types={'char','char','cell'};
+        Tbl=Table([],key,types);
+
+        for i = 1:(length(flds))-1
+        for j = 1:(length(flds2))
+            f1=flds{i};
+            f2=flds2{j};
+
+            if strcmp(f2,'best') && ~obj.bBest
+                continue
+            elseif ~obj.bBoot
+                continue
+            end
+
+            bFld=['b' f1(1) lower(f1(2:end)) 'FitAny'];
+            if isprop(obj,bFld) && ~obj.(bFld)
+                continue
+            end
+
+            if strcmp(f2,'ci')
+                K=2;
+            else
+                K=1;
+            end
+
+
+            for k = 1:K
+                typ=flds2{j};
+                val=Fit.(f1).(f2);
+                if isempty(val)
+                    continue
+                end
+                if K==2
+                    val=val(:,:,k);
+                    if k==1
+                        typ=[typ 'L'];
+                    else
+                        typ=[typ 'U'];
+                    end
+                end
+                for l = 1:size(val,1)
+                    if j == 1 && l ==1
+                        pname=f1;
+                    else
+                        pname='';
+                    end
+                    if l==1
+                        t=typ;
+                    else
+                        t='';
+                    end
+                    Tbl.add_row_sorted(pname,t,{val(l,:,:)});
+                end
+            end
+        end
+        end
+    end
+end
+methods
     function run_boot(obj,bProg,bContinue)
         if nargin < 2 || isempty(bProg)
             bProg=true;
@@ -711,7 +782,7 @@ methods
             p.c();
         end
     end
-    function safe_run(obj)
+    function safe_run(obj,bProg)
         count=0;
         while true
             try
@@ -727,7 +798,12 @@ methods
     end
 %- HELPERS
 end
-methods(Static)
+methods(Static,Hidden)
+    function [flds,pflds,flds2]=get_pack_flds()
+        flds={'RHO', 'MU', 'CR','STD','NegLL','NegLLAll','P'};
+        pflds={'nTrl','nTrlAll','PC','PA','P','N'};
+        flds2={'best','ci','std','mean'};
+    end
     function flds=getFitOptsFlds()
         fldsP=props(DVFitter);
         flds=props(DVFit);
@@ -745,7 +821,8 @@ methods(Static)
         nPass=size(R,2)/max([1,obj.nSplit]);
         nAry=numel(unique(R(:)));
         nQuad=nAry^nPass; %number of orthants
-        if size(R,3)==1
+        nCross=size(R,3);
+        if nCross==1
             nRhoAll=ceil((nQuad-nPass)/2);
         else
             nRhoAll=ceil((nQuad-nPass)/2)+nPass;
@@ -833,6 +910,57 @@ methods(Static)
             L=L(ind,:);
             U=U(ind,:);
         end
+    end
+end
+methods(Static)
+    function out=genData(stdX,cmpX,Mu,sigma,rho,cr,nTrlPerCmp)
+        nPass=size(sigma,1);
+        nCmp=size(cmpX,2);
+
+        % RESIZE
+        % Cmpx
+        cmpXAll=repelem(cmpX(1,:)',nTrlPerCmp,1);
+        if numel(stdX)==1
+            stdXAll=repmat(stdX,size(cmpXAll));
+        else
+            TODO
+        end
+
+        if isempty(Mu)
+            Mu=cmpX;
+        end
+        if size(Mu,1)==1
+            Mu=repmat(Mu,nPass,1);
+        end
+        if size(cr,2)==1
+            cr=repmat(cr,1,nCmp);
+        end
+
+        Rho=rho2Rho(rho);
+        Sigma=rho2cov(rho,sigma);
+        crit=(Mu-cr)';
+
+
+        %  DAT
+        DVDat=[];
+        RDat=[];
+        for i = 1:nCmp
+            % DV DATA
+            dvdat=mvnrnd(Mu(:,i),Sigma,nTrlPerCmp);
+            DVDat=[DVDat; dvdat];
+
+            % R DATA
+            rdat =bsxfun(@gt,dvdat,crit(i,:));
+            RDat=[RDat; rdat];
+        end
+        out=struct();
+        out.RCmpChs=RDat;
+        out.DV=DVDat;
+        out.cmpX=cmpXAll;
+        out.stdX=stdXAll;
+        out.Sigma=Sigma;
+        out.Rho=rho;
+
     end
 end
 end

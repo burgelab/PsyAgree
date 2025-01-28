@@ -60,7 +60,7 @@ methods
             F.varL=p(3);
         end
 
-        [F.rB,F.rBL,F.rL,F.corrLB]=Ext.vars2rhos(F.varB,F.covLB,F.varL,F.stdB,F.stdL);
+        [F.rB,F.rBL,F.rL,F.corrLB]=DVExt.vars2rhos(F.varB,F.covLB,F.varL,F.stdB,F.stdL);
 
 
         F.Rho=[F.rB; F.rBL; F.rL];
@@ -71,7 +71,7 @@ methods
         F=struct();
         F.stdB=obj.stdFix(1);
         F.stdL=obj.stdFix(4);
-        [F.varB,F.varL,F.covLB,F.corrLB,F.varIB,F.varIL,F.varEB]=Ext.rhos2vars(obj.rho(1),obj.rho(2),obj.rho(3),F.stdB,F.stdL);
+        [F.varB,F.varL,F.covLB,F.corrLB,F.varIB,F.varIL,F.varEB]=DVExt.rhos2vars(obj.rho(1),obj.rho(2),obj.rho(3),F.stdB,F.stdL);
     end
 %- Bounds
     function get_ext_bounds(obj)
@@ -271,6 +271,27 @@ methods(Static)
         ];
 
     end
+    function [rB,rLB,rL, corrLB]=vars2rhos(varB,covLB,varL,stdB,stdL)
+        rB =(varB + varL + 2*covLB)./(stdB.^2);
+        rLB=(varL + covLB)./(stdB .* stdL);
+        rL =(varL)./(stdL.^2);
+        corrLB=covLB./(sqrt(abs(varB)).*sqrt(abs(varL)));
+    end
+    function [varB,covLB,varL,corrLB,varIB,varIL,varEB]=rhos2vars(rB,rLB,rL,stdB,stdL)
+
+        varL =rL  .* stdL.^2;
+        covLB=rLB .* (stdB.*stdL)- varL;
+        varB =rB  .* stdB.^2     - varL -2.*covLB;
+
+        corrLB=covLB./(sqrt(abs(varB)).*sqrt(abs(varL)));
+
+        varEB=(varL+varB+2*covLB);
+
+        varIB=stdB.^2-varEB;
+        varIL=stdL.^2-varL;
+
+    end
+
 
 end
 end

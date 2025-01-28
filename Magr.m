@@ -13,8 +13,8 @@ properties(Hidden)
 end
 methods
     function obj=Magr(Data)
-        %obj.mvnopts=rMvnCdf.getMVNOpts();
-        %obj.G=rMvnCdf.getGStruct();
+        %obj.mvnopts=RMvnCdf.getMVNOpts();
+        %obj.G=RMvnCdf.getGStruct();
     end
     function obj=get_magr(obj,nSim,bProg)
         if nargin < 2; nSim=[]; end
@@ -280,10 +280,10 @@ methods(Static=true)
             cr2=cr1;
         end
         if nargin < 6 || isempty(G)
-            G=rMvnCdf.getGStruct();
+            G=RMvnCdf.getGStruct();
         end
         if nargin < 7 || isempty(mvnopts)
-            mvnopts=rMvnCdf.getMVNOpts();
+            mvnopts=RMvnCdf.getMVNOpts();
         end
 
 
@@ -297,7 +297,7 @@ methods(Static=true)
         for i=1:numel(mu1)
            MU=Magr.parseMu(mu1(i),mu2(i));
            [CRL0,CRU0]=Magr.getCR0(CRL,CRU,MU,[1 1],nDim);
-           p1=prod(rMvnCdf.Phi(CRU0),2); % XXX SLOW 1
+           p1=prod(RMvnCdf.Phi(CRU0),2); % XXX SLOW 1
            if numel(Rho)>1
                Rho=Rho(2);
            end
@@ -320,12 +320,12 @@ methods(Static=true)
     end
     function [Pnn,Pnp,Ppn,Ppp,pC,pA,pD]=getFittedResponsePattern(rho,mu1,mu2,cr1,cr2,G,mvnopts)
         if nargin < 6 || isempty(G)
-            G=rMvnCdf.getGStruct();
+            G=RMvnCdf.getGStruct();
         end
         if nargin < 7 || isempty(mvnopts)
-            mvnopts=rMvnCdf.getMVNOpts();
+            mvnopts=RMvnCdf.getMVNOpts();
         end
-        % rMvnCdf is modified version of mvncdf
+        % RMvnCdf is modified version of mvncdf
 
         MU=Magr.parseMu(mu1,mu2);
         [SIG,s,Rho]=Magr.parseRho(rho);
@@ -413,13 +413,13 @@ methods(Static,Hidden)
     end
     function [Pnn,Pnp,Ppn,Ppp,pC,pA,pD]= fitd_r_pat_old(CRL0,CRU0,MU,SIG,s,Rho,cls,G,mvnopts)
 
-        Pnn = rMvnCdf.get(CRL0{1},CRU0{1},MU,SIG,s,Rho,cls,G,mvnopts);        % NEG/NEG
-        Pnp = rMvnCdf.get(CRL0{2},CRU0{2},MU,SIG,s,Rho,cls,G,mvnopts) - Pnn;  % NEG/POS
-        Ppn = rMvnCdf.get(CRL0{3},CRU0{3},MU,SIG,s,Rho,cls,G,mvnopts) - Pnn;  % POS/NEG
+        Pnn = RMvnCdf.get(CRL0{1},CRU0{1},MU,SIG,s,Rho,cls,G,mvnopts);        % NEG/NEG
+        Pnp = RMvnCdf.get(CRL0{2},CRU0{2},MU,SIG,s,Rho,cls,G,mvnopts) - Pnn;  % NEG/POS
+        Ppn = RMvnCdf.get(CRL0{3},CRU0{3},MU,SIG,s,Rho,cls,G,mvnopts) - Pnn;  % POS/NEG
 
-        %Pnn = rMvnCdf.get(CRL0{1},CRU0{1},MU,SIG,s,Rho,cls,G,mvnopts);        % NEG/NEG
-        %Pnp = rMvnCdf.get(CRL0{2},CRU0{2},MU,SIG,s,Rho,cls,G,mvnopts) - Pnn;  % NEG/POS
-        %Ppn = rMvnCdf.get(CRL0{3},CRU0{3},MU,SIG,s,Rho,cls,G,mvnopts) - Pnn;  % POS/NEG
+        %Pnn = RMvnCdf.get(CRL0{1},CRU0{1},MU,SIG,s,Rho,cls,G,mvnopts);        % NEG/NEG
+        %Pnp = RMvnCdf.get(CRL0{2},CRU0{2},MU,SIG,s,Rho,cls,G,mvnopts) - Pnn;  % NEG/POS
+        %Ppn = RMvnCdf.get(CRL0{3},CRU0{3},MU,SIG,s,Rho,cls,G,mvnopts) - Pnn;  % POS/NEG
 
         Ppp = 1 - Pnn - Ppn - Pnp;                      % POS/POS
         pC=Ppp + Ppn/2 + Pnp/2;
@@ -438,9 +438,9 @@ methods(Static,Hidden)
 
         if mvnconsts.nDim==2
             % Pnn Pnp Ppn Ppp
-            mvnconsts=rMvnCdf.critG(Rho,mvnconsts);
+            mvnconsts=RMvnCdf.critG(Rho,mvnconsts);
             for i = 1:3
-                pP(i) = rMvnCdf.bvncdf(...
+                pP(i) = RMvnCdf.bvncdf(...
                     CRU0(i,:),...
                     Rho,...
                     mvnconsts.cls,...
@@ -460,7 +460,7 @@ methods(Static,Hidden)
         else
             for i = 1:mvnconsts.nQuad
                 % XXX faster general method?
-                pP(i)=rMvnCdf.get(CRL0(i,:),CRU0(i,:),Rho,mvnconsts);
+                pP(i)=RMvnCdf.get(CRL0(i,:),CRU0(i,:),Rho,mvnconsts);
             end
 
         end

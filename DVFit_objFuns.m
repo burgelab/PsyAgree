@@ -12,13 +12,13 @@ methods
         rho=F.Rho(2);
 
         % consts
-        C=rMvnCdf.critG(rho,obj.mvnconsts);
+        C=RMvnCdf.critG(rho,obj.mvnconsts);
         phi = prod(0.5 * erfc(-F.CRB./sqrt(2)), 2);
 
         for c = 1:obj.ncmp
-            Out.P(1,c) = rMvnCdf.bvncdf(F.CRB(1,:,c),rho,C.cls, C.w, C.y, C.p2, phi(1,:,c),true);
-            Out.P(2,c) = rMvnCdf.bvncdf(F.CRB(2,:,c),rho,C.cls, C.w, C.y, C.p2, phi(2,:,c),true)-Out.P(1,c);
-            Out.P(3,c) = rMvnCdf.bvncdf(F.CRB(3,:,c),rho,C.cls, C.w, C.y, C.p2, phi(3,:,c),true)-Out.P(1,c);
+            Out.P(1,c) = RMvnCdf.bvncdf(F.CRB(1,:,c),rho,C.cls, C.w, C.y, C.p2, phi(1,:,c),true);
+            Out.P(2,c) = RMvnCdf.bvncdf(F.CRB(2,:,c),rho,C.cls, C.w, C.y, C.p2, phi(2,:,c),true)-Out.P(1,c);
+            Out.P(3,c) = RMvnCdf.bvncdf(F.CRB(3,:,c),rho,C.cls, C.w, C.y, C.p2, phi(3,:,c),true)-Out.P(1,c);
         end
         Out.P(4,:) = 1-sum(Out.P,1);
 
