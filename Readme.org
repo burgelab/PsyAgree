@@ -37,20 +37,22 @@ XXX plot
 ** Main Methods
 *** DVFitter.new
 ~obj=DVFitter.new(stdX,cmpX,RmpChs,Opts)~
+
 Construct DVFitter object
+
 **** Positional Arguments
+
  #+begin_src
-| stdX    | standard values           |
-| cmpX    | comparison values         |
-| RcmpChs | which interval was chosen |
+| stdX    | [t x 1]     | standard values                               |
+| cmpX    | [t x 1]     | comparison values                             |
+| RcmpChs | [t x n x o] | response data where which interval was chosen |
  #+end_src
 
- #+begin_src octave
-size(RcmpChs,1) % number of trials
-size(RcmpChs,2) % number of passes
-size(RcmpChs,3) % number of observers
- #+end_src
+t = number of tirals
 
+n = number of passes
+
+o = number of observers (for between observer correlation).
 
 
 #+begin_src
@@ -85,37 +87,52 @@ size(RcmpChs,3) % number of observers
 *modelType
 
 +FitInd variables are vectors with values i numbered from 0 to k, where k is the number of unique dimensions of the parameter to be fit. The ith value corresponds to the ith dimension of the parameter.  If the ith value is set to 0, the ith dimension of the respective parameter is set to be fixed to the value set by the respective *Fix variable. If set to a value >0, then the ith dimension will be fit. If more than value are equal and non-zero, then all dimensions will be fit as a single value.
- Examples:
-         a four dimensional mu parameter where each dimension is fit
+
+Examples:
+#+begin_src octave
+         %% 4D mu parameter where each dimension is fit
          muFitInd=[1 2 3 4]
          muFix=[]
 
-         a four dimensional mu parameter where the first and last dimensions are fixed to be zero
+         %% 4D mu parameter where the first and last dimensions are fixed to be zero
          muFix=[0 1 2 0]
          muFix=[0 0]
 
-         a four dimensional mu parameter where the first and last dimensions are fixed to be 0 and 1 respectively, and the 2nd and 3rd are both fit but must take on the same value
+         %% 4D mu parameter where the first and last dimensions are fixed to be 0 and 1 respectively and the 2nd and 3rd are both fit but must take on the same value
          muFix=[0 1 1 0]
          muFix=[0 1]
+#+end_src
 
- std, mu, cr variables have n values equal to
- rho variables have m values equal to (nQuad-nPass)/2 for XXX otherwise (nQuad-nPass)/2 + nPass, where nPass is the number of passes and nQuad is the number of orthants (n-ary^nPasses).
+ std, mu, cr variables have n values equal to the number of passes
+
+ rho variables have m values equal to ~(nQuad-nPass)/2~ for XXX otherwise ~(nQuad-nPass)/2 + nPass~, where ~nPass~ is the number of passes and ~nQuad~ is the number of orthants ~(n-ary^nPasses)~.
 
 *** DVFitter.getDefaults
- ~Opts=DVFitter.getDefaults()~
- Generate a struct with all options (see Struct Arguments above) and their default values
+Opts=DVFitter.getDefaults()~
+
+Generate a struct with all options (see Struct Arguments above) and their default values
+
 *** DVFitter.genData
 ~DVFitter.genData(stdX,cmpX,mu,sigma,rho,cr,nTrlPerCmp)~
+
 Generate example data.
+
 *** obj.run
 ~obj.run(bProg)~
+
 Fit best and/or boot as specified.
+
 *** obj.safe_run
 ~obj.safe_run(bProg)~
+
 obj.run, but robust to errors.
+
 *** obj.cont
 ~obj.cont(bProg)~
+
 Continue fitting after an error or interruption (e.g. ctrl-c)
+
 *** obj.printResults
 ~obj.printResults()~
+
 Prints fitted results in a table format
