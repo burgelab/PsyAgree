@@ -393,7 +393,6 @@ methods(Hidden)
             switch mdl
             case {'E','F','E0','F0'}
                 mdl='RR';
-            case 'EL'
             end
         else
             obj.extType='';
