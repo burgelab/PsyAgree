@@ -470,6 +470,7 @@ methods(Static,Hidden)
         pC=pP./(nA./obj.agreeInds);
     end
     function [patterns,agreeInds]=getRespPats(R,nPass)
+    % get response patterns
         rs=unique(R(:));
         pats=repmat({rs},1,nPass);
         pats=Set.distribute(pats{:});

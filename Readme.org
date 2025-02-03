@@ -1,21 +1,21 @@
 * PsyAgreeMat
-Fit and plot decision variable correlation to multiple pass psychometric data.
+PsyAgree is a Matlab m-file toolbox for computing decision variable from data collected in double-pass (or n-tuple-pass) forced-choice psychophysical experiments.
 
 ** Use
  #+begin_src octave
 %% Generate Data
 stdX=[7.5]/60; % standard
-cmpX=[5.1540    6.3300    7.5000    8.6700    9.8460]*60; % comparisons
+cmpX=[5.1540    6.3300    7.5000    8.6700    9.8460]/60; % comparisons
 mu=[0; 0];
 sigma=[0.8; 0.8]; % standard deviation
 rho=[0.3];        % correlation
 cr=[0];           % criteria
 nTrlPerCmp=1000;  % number of trials per comparison
 
-S=DVFitter.genData(stdX,cmpX,mu,sigma,rho,cr,nTrlPerCmp);
+S=DVFitter.genData(nTrlPerCmp,stdX,cmpX,mu,sigma,rho,cr);
 
 %% Set fitting options
-Opts=DVFitter.getDefaults;
+Opts=DVFitter.getDefaults();
 Opts.rhoFitInd=[1];
 Opts.bCtrMu=true;
 Opts.bCombineCmp=true;
@@ -23,10 +23,10 @@ Opts.bCombineCmp=true;
 Opts.modelType='RR';
 Opts.stdFix=sigma;
 
-%% construct
+%% Construct
 dv=DVFitter.new(S.stdX,S.cmpX,S.RCmpChs, Opts);
 
-%% construct
+%% Run
 dv.run();
 
 %% print results
@@ -41,39 +41,32 @@ XXX plot
 Construct DVFitter object
 
 **** Positional Arguments
-
  #+begin_src
 | stdX    | [t x 1]     | standard values                               |
 | cmpX    | [t x 1]     | comparison values                             |
 | RcmpChs | [t x n x o] | response data where which interval was chosen |
  #+end_src
-
-t = number of tirals
-
-n = number of passes
-
-o = number of observers (for between observer correlation).
-
-
-#+begin_src
-| modelType*  | 'RMM'     | specifies model to be fit (see below)                                                       |
+where ~t~ = number of tirals, ~n~ = number of passes, ~o~ = number of observers (for between observer correlation).
+**** Named Arguments
+##+begin_src
+| modelType** | 'RMM'     | specifies model to be fit (see below)                                                       |
 |             |           |                                                                                             |
-| rhoFitInd+  | []        | correlation parameter group indices (see below)                                             |
-| stdFitInd+  | []        | standard devitaion parameter group indices                                                  |
-| muFitInd+   | []        | mean parameter group indices                                                                |
-| crFitInd+   | []        | criterion parameter group indices                                                           |
+| rhoFitInd*  | []        | correlation parameter group indices (see below)                                             |
+| stdFitInd*  | []        | standard devitaion parameter group indices                                                  |
+| muFitInd*   | []        | mean parameter group indices                                                                |
+| crFitInd*   | []        | criterion parameter group indices                                                           |
 |             |           |                                                                                             |
-| rhoFix+     | []        | correlation parameter fixed values (off diagonal of normalized covaraince matrix)           |
-| stdFix+     | []        | standard deviation parameter fixed values (diagonal of the un-normalized covariance matrix) |
-| muFix+      | []        | mean parameter fixed values                                                                 |
-| crFix+      | []        | criterion parameter fixed values                                                            |
+| rhoFix*     | []        | correlation parameter fixed values (off diagonal of normalized covaraince matrix)           |
+| stdFix*     | []        | standard deviation parameter fixed values (diagonal of the un-normalized covariance matrix) |
+| muFix*      | []        | mean parameter fixed values                                                                 |
+| crFix*      | []        | criterion parameter fixed values                                                            |
 |             |           |                                                                                             |
-| bCombineCmp | true      | true = fit using all comparisons data, false = fit for each comparison individually         |
-| bCtrMu      | true      | whether to XXX                                                                              |
-| bObs        | false     | whether between observer correlation (XXX 3rd dim?)                                         |
-| nSplit      | 0         | number of times to split XXX                                                                |
-| bNoFit      | false     | don't fit                                                                                   |
-| cls         | double    | data type                                                                                   |
+| bCombineCmp | true      | true = fit using all comparisons data, false = fit for each comparison individually.        |
+| bCtrMu      | true      | Whether to mu at relative to standards (mu=mu-std).                                         |
+| bObs        | false     | Whether between observer correlation (XXX 3rd dim?)                                         |
+| nSplit      | 0         | Number of times to split XXX                                                                |
+| bNoFit      | false     | Run parameters through model, but don't fit.                                                |
+| cls         | 'double'  | Data type to cast data and model as.                                                        |
 |             |           |                                                                                             |
 | nBoot       | 1000      | number of bootstraps                                                                        |
 | nBest       | 100       | fit nBest number of times and choose the one with the smallest negative likelihood          |
@@ -84,7 +77,10 @@ o = number of observers (for between observer correlation).
 | bProg       | true      | print progress                                                                              |
  #+end_src
 
-*modelType
+**modelType is a shorthand method for specifying which paramters are to be fit (see *FitInd below) and also allows for specifying special models.
+Special models include
+| 'E' | (E)xternal components model for 4-pass data only |
+| 'F' | (F)ake External componenents model               |
 
 +FitInd variables are vectors with values i numbered from 0 to k, where k is the number of unique dimensions of the parameter to be fit. The ith value corresponds to the ith dimension of the parameter.  If the ith value is set to 0, the ith dimension of the respective parameter is set to be fixed to the value set by the respective *Fix variable. If set to a value >0, then the ith dimension will be fit. If more than value are equal and non-zero, then all dimensions will be fit as a single value.
 
